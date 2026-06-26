@@ -1,0 +1,108 @@
+Flutter crash report.
+Please report a bug at https://github.com/flutter/flutter/issues.
+
+## command
+
+flutter run -d chrome
+
+## exception
+
+_TypeError: Null check operator used on a null value
+
+```
+#0      ResidentHandlers.debugDumpRenderTree (package:flutter_tools/src/resident_runner.dart:736:62)
+#1      TerminalHandler._commonTerminalInputHandler (package:flutter_tools/src/resident_runner.dart:1866:31)
+#2      TerminalHandler.processTerminalInput (package:flutter_tools/src/resident_runner.dart:1906:13)
+#3      _rootRunUnary (dart:async/zone_root.dart:48:47)
+#4      _CustomZone.runUnary (dart:async/zone.dart:733:19)
+#5      _CustomZone.runUnaryGuarded (dart:async/zone.dart:633:7)
+#6      _BufferingStreamSubscription._sendData (dart:async/stream_impl.dart:381:11)
+#7      _BufferingStreamSubscription._add (dart:async/stream_impl.dart:312:7)
+#8      _SyncBroadcastStreamController._sendData (dart:async/broadcast_stream_controller.dart:385:25)
+#9      _BroadcastStreamController.add (dart:async/broadcast_stream_controller.dart:257:5)
+#10     _AsBroadcastStreamController.add (dart:async/broadcast_stream_controller.dart:488:11)
+#11     _rootRunUnary (dart:async/zone_root.dart:48:47)
+#12     _CustomZone.runUnary (dart:async/zone.dart:733:19)
+#13     _CustomZone.runUnaryGuarded (dart:async/zone.dart:633:7)
+#14     _BufferingStreamSubscription._sendData (dart:async/stream_impl.dart:381:11)
+#15     _BufferingStreamSubscription._add (dart:async/stream_impl.dart:312:7)
+#16     _SinkTransformerStreamSubscription._add (dart:async/stream_transformers.dart:67:11)
+#17     _EventSinkWrapper.add (dart:async/stream_transformers.dart:13:11)
+#18     _StringAdapterSink.add (dart:convert/string_conversion.dart:228:11)
+#19     _StringAdapterSink.addSlice (dart:convert/string_conversion.dart:233:7)
+#20     _Utf8ConversionSink.addSlice (dart:convert/string_conversion.dart:313:20)
+#21     _ErrorHandlingAsciiDecoderSink.addSlice (dart:convert/ascii.dart:285:17)
+#22     _ErrorHandlingAsciiDecoderSink.add (dart:convert/ascii.dart:271:5)
+#23     _ConverterStreamEventSink.add (dart:convert/chunked_conversion.dart:70:18)
+#24     _SinkTransformerStreamSubscription._handleData (dart:async/stream_transformers.dart:115:24)
+#25     _rootRunUnary (dart:async/zone_root.dart:48:47)
+#26     _CustomZone.runUnary (dart:async/zone.dart:733:19)
+#27     _CustomZone.runUnaryGuarded (dart:async/zone.dart:633:7)
+#28     _BufferingStreamSubscription._sendData (dart:async/stream_impl.dart:381:11)
+#29     _BufferingStreamSubscription._add (dart:async/stream_impl.dart:312:7)
+#30     _SyncStreamControllerDispatch._sendData (dart:async/stream_controller.dart:798:19)
+#31     _StreamController._add (dart:async/stream_controller.dart:663:7)
+#32     _StreamController.add (dart:async/stream_controller.dart:618:5)
+#33     _Socket._onData (dart:io-patch/socket_patch.dart:2874:41)
+#34     _rootRunUnary (dart:async/zone_root.dart:56:13)
+#35     _CustomZone.runUnary (dart:async/zone.dart:733:19)
+#36     _CustomZone.runUnaryGuarded (dart:async/zone.dart:633:7)
+#37     _BufferingStreamSubscription._sendData (dart:async/stream_impl.dart:381:11)
+#38     _BufferingStreamSubscription._add (dart:async/stream_impl.dart:312:7)
+#39     _SyncStreamControllerDispatch._sendData (dart:async/stream_controller.dart:798:19)
+#40     _StreamController._add (dart:async/stream_controller.dart:663:7)
+#41     _StreamController.add (dart:async/stream_controller.dart:618:5)
+#42     new _RawSocket.<anonymous closure> (dart:io-patch/socket_patch.dart:2312:31)
+#43     _NativeSocket.issueReadEvent.issue (dart:io-patch/socket_patch.dart:1647:14)
+#44     _microtaskLoop (dart:async/schedule_microtask.dart:40:35)
+#45     _startMicrotaskLoop (dart:async/schedule_microtask.dart:49:5)
+#46     _runPendingImmediateCallback (dart:isolate-patch/isolate_patch.dart:127:13)
+#47     _RawReceivePort._handleMessage (dart:isolate-patch/isolate_patch.dart:194:5)
+```
+
+## flutter doctor
+
+```
+[32m[✓][39m Flutter (Channel stable, 3.41.3, on Microsoft Windows [Version 10.0.26200.8655], locale en-IN)
+    [4.2s]
+    [32m•[39m Flutter version 3.41.3 on channel stable at C:\flutter
+    [32m•[39m Upstream repository https://github.com/flutter/flutter.git
+    [32m•[39m Framework revision 48c32af034 (4 months ago), 2026-02-27 17:09:06 -0500
+    [32m•[39m Engine revision 327ed81450
+    [32m•[39m Dart version 3.11.1
+    [32m•[39m DevTools version 2.54.1
+    [32m•[39m Feature flags: enable-web, enable-linux-desktop, enable-macos-desktop,
+      enable-windows-desktop, enable-android, enable-ios, cli-animations, enable-native-assets,
+      omit-legacy-version-file, enable-lldb-debugging, enable-uiscene-migration
+
+[32m[✓][39m Windows Version (Windows 11 or higher, 25H2, 2009) [14.6s]
+
+[32m[✓][39m Android toolchain - develop for Android devices (Android SDK version 36.1.0) [20.8s]
+    [32m•[39m Android SDK at C:\Users\ajith\AppData\Local\Android\sdk
+    [32m•[39m Emulator version 36.6.11.0 (build_id 15507667) (CL:N/A)
+    [32m•[39m Platform android-36.1, build-tools 36.1.0
+    [32m•[39m Java binary at: C:\Program Files\Android\Android Studio\jbr\bin\java
+      This is the JDK bundled with the latest Android Studio installation on this machine.
+      To manually set the JDK path, use: `flutter config --jdk-dir="path/to/jdk"`.
+    [32m•[39m Java version OpenJDK Runtime Environment (build 21.0.10+-14961533-b1163.108)
+    [32m•[39m All Android licenses accepted.
+
+[32m[✓][39m Chrome - develop for the web [95ms]
+    [32m•[39m Chrome at C:\Program Files\Google\Chrome\Application\chrome.exe
+
+[31m[✗][39m Visual Studio - develop Windows apps [91ms]
+    [31m✗[39m Visual Studio not installed; this is necessary to develop Windows apps.
+      Download at https://visualstudio.microsoft.com/downloads/.
+      Please install the "Desktop development with C++" workload, including all of its default
+      components
+
+[32m[✓][39m Connected device (3 available) [2.8s]
+    [32m•[39m Windows (desktop) • windows • windows-x64    • Microsoft Windows [Version 10.0.26200.8655]
+    [32m•[39m Chrome (web)      • chrome  • web-javascript • Google Chrome 149.0.7827.116
+    [32m•[39m Edge (web)        • edge    • web-javascript • Microsoft Edge 149.0.4022.69
+
+[32m[✓][39m Network resources [2.3s]
+    [32m•[39m All expected network resources are available.
+
+[33m![39m Doctor found issues in 1 category.
+```
