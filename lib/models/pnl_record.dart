@@ -117,6 +117,7 @@ class PnlRecord {
     String? exchange,
     String? stockName,
     int? quantity,
+    double? buyPrice,
     double? sellPrice,
     DateTime? sellDate,
     TradeType? tradeType,
@@ -131,7 +132,7 @@ class PnlRecord {
       exchange: exchange ?? this.exchange,
       stockName: stockName ?? this.stockName,
       quantity: quantity ?? this.quantity,
-      buyPrice: buyPrice, // buy price is immutable
+      buyPrice: buyPrice ?? this.buyPrice,
       sellPrice: sellPrice ?? this.sellPrice,
       sellDate: sellDate ?? this.sellDate,
       tradeType: tradeType ?? this.tradeType,

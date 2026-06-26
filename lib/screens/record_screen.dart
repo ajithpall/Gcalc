@@ -1351,6 +1351,316 @@ class _RecordScreenState extends State<RecordScreen>
     );
   }
 
+  void _confirmDeleteRecord(PnlRecord record) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Text('Delete Trade', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Are you sure you want to delete this trade?',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white60)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await _deleteRecord(record.id);
+              _showSnack('Trade record deleted.');
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Color(0xFFF43F5E), fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openEditTradeDialog(PnlRecord record) {
+    final editStockController = TextEditingController(text: record.stockName);
+    final editQtyController = TextEditingController(text: record.quantity.toString());
+    final editBuyController = TextEditingController(text: record.buyPrice.toString());
+    final editSellController = TextEditingController(text: record.sellPrice?.toString() ?? '');
+
+    String editExchange = record.exchange;
+    TradeType editTradeType = record.tradeType;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 24.0,
+                right: 24.0,
+                top: 24.0,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Edit Trade Record',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white60),
+                          onPressed: () => Navigator.pop(sheetContext),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionLabel('EXCHANGE'),
+                              const SizedBox(height: 8),
+                              _buildToggle(
+                                options: const ['NSE', 'BSE'],
+                                selected: editExchange,
+                                color: const Color(0xFF6366F1),
+                                onSelect: (v) => setModalState(() => editExchange = v),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionLabel('SEGMENT'),
+                              const SizedBox(height: 8),
+                              DropdownButtonFormField<TradeType>(
+                                value: editTradeType,
+                                dropdownColor: const Color(0xFF1E293B),
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: const Color(0xFF0F172A),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                items: TradeType.values.map((type) {
+                                  return DropdownMenuItem<TradeType>(
+                                    value: type,
+                                    child: Text(type.displayName),
+                                  );
+                                }).toList(),
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setModalState(() => editTradeType = val);
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildSectionLabel('STOCK NAME'),
+                    const SizedBox(height: 8),
+                    _buildFormField(
+                      controller: editStockController,
+                      label: 'Stock Name',
+                      icon: Icons.show_chart,
+                      iconColor: const Color(0xFF10B981),
+                      caps: true,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildFormField(
+                            controller: editBuyController,
+                            label: 'Buy Price ₹',
+                            icon: Icons.arrow_downward,
+                            iconColor: const Color(0xFF3B82F6),
+                            isDecimal: true,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildFormField(
+                            controller: editSellController,
+                            label: editTradeType == TradeType.delivery ? 'Sell ₹ (opt.)' : 'Sell Price ₹',
+                            icon: Icons.arrow_upward,
+                            iconColor: editTradeType == TradeType.delivery
+                                ? const Color(0xFFF59E0B)
+                                : const Color(0xFF8B5CF6),
+                            isDecimal: true,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildFormField(
+                            controller: editQtyController,
+                            label: 'Qty',
+                            icon: Icons.numbers,
+                            iconColor: const Color(0xFFF59E0B),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.save_alt_outlined, color: Colors.white, size: 20),
+                        label: const Text(
+                          'Save Changes',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6366F1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 8,
+                          shadowColor: const Color(0xFF6366F1).withOpacity(0.4),
+                        ),
+                        onPressed: () async {
+                          final stockName = editStockController.text.trim();
+                          final b = double.tryParse(editBuyController.text) ?? 0.0;
+                          final q = int.tryParse(editQtyController.text) ?? 0;
+                          final s = double.tryParse(editSellController.text);
+
+                          if (stockName.isEmpty || b <= 0 || q <= 0) {
+                            _showSnack('Please fill Stock Name, Buy Price and Quantity.', isError: true);
+                            return;
+                          }
+
+                          if (editTradeType != TradeType.delivery && (s == null || s <= 0)) {
+                            _showSnack('Please enter a valid Sell Price.', isError: true);
+                            return;
+                          }
+
+                          PnlRecord updatedRecord;
+                          if (editTradeType == TradeType.delivery && (s == null || s <= 0)) {
+                            updatedRecord = PnlRecord(
+                              id: record.id,
+                              date: record.date,
+                              exchange: editExchange,
+                              stockName: stockName,
+                              quantity: q,
+                              buyPrice: b,
+                              sellPrice: null,
+                              sellDate: null,
+                              tradeType: TradeType.delivery,
+                              grossPL: 0.0,
+                              totalCharges: 0.0,
+                              netPL: 0.0,
+                              status: PositionStatus.open,
+                            );
+                          } else {
+                            final calc = calculateGrowwCharges(
+                              type: editTradeType,
+                              quantity: q,
+                              buyPrice: b,
+                              sellPrice: s ?? 0.0,
+                              isNSE: editExchange == 'NSE',
+                            );
+
+                            updatedRecord = PnlRecord(
+                              id: record.id,
+                              date: record.date,
+                              exchange: editExchange,
+                              stockName: stockName,
+                              quantity: q,
+                              buyPrice: b,
+                              sellPrice: s,
+                              sellDate: record.sellDate ?? DateTime.now(),
+                              tradeType: editTradeType,
+                              grossPL: calc.grossPL,
+                              totalCharges: calc.totalCharges,
+                              netPL: calc.netPL,
+                              status: PositionStatus.closed,
+                            );
+                          }
+
+                          final navigator = Navigator.of(sheetContext);
+                          final updatedList = await _journalService.updatePnlRecord(updatedRecord);
+                          if (!mounted) return;
+                          setState(() {
+                            _records = updatedList;
+                          });
+                          navigator.pop();
+                          _showSnack('Trade changes saved successfully!');
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPopupMenuButton(PnlRecord record) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert, color: Colors.white70),
+      color: const Color(0xFF1E293B),
+      onSelected: (value) {
+        if (value == 'edit') {
+          _openEditTradeDialog(record);
+        } else if (value == 'delete') {
+          _confirmDeleteRecord(record);
+        }
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        const PopupMenuItem<String>(
+          value: 'edit',
+          child: Text('Edit'),
+        ),
+        const PopupMenuItem<String>(
+          value: 'delete',
+          child: Text('Delete', style: TextStyle(color: Colors.red)),
+        ),
+      ],
+    );
+  }
+
   Widget _buildRecordCard(PnlRecord record) {
     final isOpen = record.status == PositionStatus.open;
     final isProfit = record.netPL >= 0;
@@ -1360,62 +1670,34 @@ class _RecordScreenState extends State<RecordScreen>
             ? const Color(0xFF10B981)
             : const Color(0xFFF43F5E);
 
-    return Dismissible(
-      key: Key(record.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF43F5E).withOpacity(0.15),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Icon(Icons.delete_outline,
-            color: Color(0xFFF43F5E), size: 24),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardColor.withOpacity(isOpen ? 0.4 : 0.15)),
+        boxShadow: isOpen
+            ? [
+                BoxShadow(
+                  color: const Color(0xFFF59E0B).withOpacity(0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                )
+              ]
+            : null,
       ),
-      confirmDismiss: (_) async {
-        return await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: const Color(0xFF1E293B),
-            title: const Text('Delete Record?',
-                style: TextStyle(color: Colors.white)),
-            content: Text(
-                'Remove ${record.stockName} from ${_dateFormat.format(record.date)}?',
-                style: const TextStyle(color: Colors.white70)),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Cancel',
-                      style: TextStyle(color: Colors.white60))),
-              TextButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Delete',
-                      style: TextStyle(
-                          color: Color(0xFFF43F5E),
-                          fontWeight: FontWeight.bold))),
-            ],
-          ),
-        );
-      },
-      onDismissed: (_) => _deleteRecord(record.id),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E293B),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cardColor.withOpacity(isOpen ? 0.4 : 0.15)),
-          boxShadow: isOpen
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFFF59E0B).withOpacity(0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  )
-                ]
-              : null,
-        ),
+      child: InkWell(
+        onTap: () {
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: const Color(0xFF1A1F2C),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (context) => DetailedChargesModal(record: record),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
         child: isOpen
             ? _buildOpenPositionCardContent(record)
             : _buildClosedPositionCardContent(record, isProfit, cardColor),
@@ -1460,6 +1742,8 @@ class _RecordScreenState extends State<RecordScreen>
               _badge(record.exchange, const Color(0xFF6366F1)),
               const SizedBox(width: 6),
               _badge('Delivery', const Color(0xFF3B82F6)),
+              const SizedBox(width: 4),
+              _buildPopupMenuButton(record),
             ],
           ),
           const SizedBox(height: 12),
@@ -1580,6 +1864,8 @@ class _RecordScreenState extends State<RecordScreen>
                 _dateFormat.format(record.date),
                 style: const TextStyle(color: Colors.white38, fontSize: 11),
               ),
+              const SizedBox(width: 4),
+              _buildPopupMenuButton(record),
             ],
           ),
           const SizedBox(height: 12),
@@ -2318,6 +2604,340 @@ class _RecordScreenState extends State<RecordScreen>
           }),
         ],
       ),
+    );
+  }
+}
+
+class DetailedChargesModal extends StatelessWidget {
+  final PnlRecord record;
+
+  const DetailedChargesModal({super.key, required this.record});
+
+  @override
+  Widget build(BuildContext context) {
+    final currencyFormat =
+        NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2);
+    final isOpen = record.status == PositionStatus.open;
+
+    final calc = calculateGrowwCharges(
+      type: record.tradeType,
+      quantity: record.quantity,
+      buyPrice: record.buyPrice,
+      sellPrice: record.sellPrice ?? 0.0,
+      isNSE: record.exchange == 'NSE',
+    );
+
+    final double turnover = calc.turnover;
+    final double grossPL = isOpen ? 0.0 : calc.grossPL;
+    final double netPL = isOpen ? 0.0 : calc.netPL;
+    final double totalCharges = calc.totalCharges;
+
+    String brokerageNote() {
+      switch (record.tradeType) {
+        case TradeType.delivery:
+        case TradeType.intraday:
+        case TradeType.futures:
+          return '0.05% or ₹20 per order (whichever is lower)';
+        case TradeType.options:
+          return 'Flat ₹20 per buy + ₹20 per sell';
+      }
+    }
+
+    String sttNote() {
+      switch (record.tradeType) {
+        case TradeType.delivery:
+          return '0.1% on both buy & sell';
+        case TradeType.intraday:
+          return '0.025% on sell side only';
+        case TradeType.futures:
+          return '0.05% on sell side only';
+        case TradeType.options:
+          return '0.15% on sell premium';
+      }
+    }
+
+    String exchangeNote() {
+      switch (record.tradeType) {
+        case TradeType.delivery:
+        case TradeType.intraday:
+          return '0.00297% of turnover (NSE)';
+        case TradeType.futures:
+          return '0.00173% of turnover (NSE)';
+        case TradeType.options:
+          return '0.03503% of premium turnover';
+      }
+    }
+
+    String stampNote() {
+      switch (record.tradeType) {
+        case TradeType.delivery:
+          return '0.015% on buy side';
+        case TradeType.intraday:
+          return '0.003% on buy side';
+        case TradeType.futures:
+          return '0.002% on buy side';
+        case TradeType.options:
+          return '0.003% on buy side';
+      }
+    }
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFF1A1F2C),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Detailed Charges Breakdown',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isOpen ? 'Open position · Charges calculated on buy' : 'Where your money goes',
+                      style: TextStyle(
+                          color: Colors.white70, fontSize: 11),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white60),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _summaryCell('Turnover', currencyFormat.format(turnover), Colors.white70),
+                  _vDivider(),
+                  _summaryCell(
+                      'Gross P&L',
+                      currencyFormat.format(grossPL),
+                      isOpen
+                          ? Colors.white70
+                          : (grossPL >= 0 ? const Color(0xFF10B981) : const Color(0xFFF43F5E))),
+                  _vDivider(),
+                  _summaryCell('Total Charges', currencyFormat.format(totalCharges), const Color(0xFFF43F5E)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Divider(color: Color(0xFF334155)),
+            const SizedBox(height: 12),
+
+            _sectionLabel('BROKER CHARGES (GROWW)'),
+            const SizedBox(height: 10),
+            _chargeRow(
+              label: 'Brokerage',
+              sublabel: brokerageNote(),
+              value: calc.growwCharges,
+              icon: Icons.business_center_outlined,
+              color: const Color(0xFF6366F1),
+              currencyFormat: currencyFormat,
+            ),
+            const SizedBox(height: 12),
+            const Divider(color: Color(0xFF334155)),
+            const SizedBox(height: 12),
+
+            _sectionLabel('REGULATORY & EXCHANGE CHARGES'),
+            const SizedBox(height: 10),
+            _chargeRow(
+              label: 'STT',
+              sublabel: sttNote(),
+              value: calc.stt,
+              icon: Icons.account_balance_outlined,
+              color: const Color(0xFFF59E0B),
+              currencyFormat: currencyFormat,
+            ),
+            const SizedBox(height: 10),
+            _chargeRow(
+              label: 'Exchange Transaction Charges',
+              sublabel: exchangeNote(),
+              value: calc.exchangeCharges,
+              icon: Icons.sync_alt,
+              color: const Color(0xFF3B82F6),
+              currencyFormat: currencyFormat,
+            ),
+            const SizedBox(height: 10),
+            _chargeRow(
+              label: 'SEBI Turnover Fees',
+              sublabel: '₹10 per crore turnover',
+              value: calc.sebiFees,
+              icon: Icons.gavel_outlined,
+              color: const Color(0xFF10B981),
+              currencyFormat: currencyFormat,
+            ),
+            if (calc.dpCharges > 0) ...[
+              const SizedBox(height: 10),
+              _chargeRow(
+                label: 'DP Charges',
+                sublabel: '₹18.29 (GST incl.) on sell',
+                value: calc.dpCharges,
+                icon: Icons.account_balance_wallet_outlined,
+                color: const Color(0xFFF97316),
+                currencyFormat: currencyFormat,
+              ),
+            ],
+            const SizedBox(height: 10),
+            _chargeRow(
+              label: 'Stamp Duty',
+              sublabel: stampNote(),
+              value: calc.stampDuty,
+              icon: Icons.local_post_office_outlined,
+              color: const Color(0xFFEC4899),
+              currencyFormat: currencyFormat,
+            ),
+            const SizedBox(height: 10),
+            _chargeRow(
+              label: 'GST',
+              sublabel: '18% on brokerage + exchange + SEBI',
+              value: calc.gst,
+              icon: Icons.receipt_outlined,
+              color: const Color(0xFF8B5CF6),
+              currencyFormat: currencyFormat,
+            ),
+            const SizedBox(height: 16),
+            const Divider(color: Color(0xFF334155)),
+            const SizedBox(height: 14),
+
+            _totalChargesRow(isOpen, netPL, currencyFormat),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: Colors.white38,
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.1,
+      ),
+    );
+  }
+
+  Widget _summaryCell(String label, String value, Color valueColor) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(label,
+              style: const TextStyle(color: Colors.white38, fontSize: 10),
+              textAlign: TextAlign.center),
+          const SizedBox(height: 4),
+          Text(value,
+              style: TextStyle(
+                  color: valueColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis),
+        ],
+      ),
+    );
+  }
+
+  Widget _vDivider() {
+    return Container(
+        width: 1, height: 32, color: Colors.white.withValues(alpha: 0.08));
+  }
+
+  Widget _chargeRow({
+    required String label,
+    required String sublabel,
+    required double value,
+    required IconData icon,
+    required Color color,
+    required NumberFormat currencyFormat,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: color, size: 16),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+              Text(sublabel,
+                  style: const TextStyle(
+                      color: Colors.white38, fontSize: 10)),
+            ],
+          ),
+        ),
+        Text(
+          currencyFormat.format(value),
+          style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 13),
+        ),
+      ],
+    );
+  }
+
+  Widget _totalChargesRow(bool isOpen, double netPL, NumberFormat currencyFormat) {
+    final isProfit = netPL >= 0;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(isOpen ? 'Estimated Net P&L' : 'Net P&L',
+                style: const TextStyle(
+                    color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+            Text(
+              isOpen ? 'If sold at current price (₹0)' : '${isProfit ? 'Profit' : 'Loss'} after all charges',
+              style: const TextStyle(color: Colors.white38, fontSize: 11),
+            ),
+          ],
+        ),
+        Text(
+          isOpen ? 'N/A' : '${isProfit ? '+' : ''}${currencyFormat.format(netPL)}',
+          style: TextStyle(
+            color: isOpen
+                ? Colors.white70
+                : (isProfit ? const Color(0xFF10B981) : const Color(0xFFF43F5E)),
+            fontWeight: FontWeight.w900,
+            fontSize: 22,
+            letterSpacing: -0.5,
+          ),
+        ),
+      ],
     );
   }
 }
