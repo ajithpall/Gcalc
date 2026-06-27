@@ -1707,54 +1707,72 @@ class _RecordScreenState extends State<RecordScreen>
 
   Widget _buildOpenPositionCardContent(PnlRecord record) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top row
+          // Top row — responsive layout
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF59E0B).withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text('HOLDING',
-                    style: TextStyle(
-                        color: Color(0xFFF59E0B),
-                        fontWeight: FontWeight.w800,
-                        fontSize: 11,
-                        letterSpacing: 0.5)),
-              ),
-              const SizedBox(width: 8),
+              // Left side: stock details with text safety
               Expanded(
-                child: Text(
-                  record.stockName,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15),
-                  overflow: TextOverflow.ellipsis,
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF59E0B).withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text('HOLDING',
+                          style: TextStyle(
+                              color: Color(0xFFF59E0B),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 11,
+                              letterSpacing: 0.5)),
+                    ),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 160),
+                      child: Text(
+                        record.stockName,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15),
+                      ),
+                    ),
+                    _badge(record.exchange, const Color(0xFF6366F1)),
+                    _badge('Delivery', const Color(0xFF3B82F6)),
+                  ],
                 ),
               ),
-              _badge(record.exchange, const Color(0xFF6366F1)),
-              const SizedBox(width: 6),
-              _badge('Delivery', const Color(0xFF3B82F6)),
-              const SizedBox(width: 4),
-              _buildPopupMenuButton(record),
+              // Right side: stays intact on all screen sizes
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildPopupMenuButton(record),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 12),
 
           // Buy details
-          Row(
+          Wrap(
+            spacing: 20,
+            runSpacing: 8,
             children: [
-              _recordDetail('Buy Price', _currencyFormat.format(record.buyPrice)),
-              const SizedBox(width: 20),
+              _recordDetail(
+                  'Buy Price', _currencyFormat.format(record.buyPrice)),
               _recordDetail('Qty', record.quantity.toString()),
-              const SizedBox(width: 20),
               _recordDetail('Buy Date', _dateFormat.format(record.date)),
             ],
           ),
@@ -1833,54 +1851,73 @@ class _RecordScreenState extends State<RecordScreen>
   Widget _buildClosedPositionCardContent(
       PnlRecord record, bool isProfit, Color profitColor) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Top row — responsive layout
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: profitColor.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  record.stockName,
-                  style: TextStyle(
-                      color: profitColor,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13),
+              // Left side: stock name + badges with text safety
+              Expanded(
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 160),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: profitColor.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          record.stockName,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: TextStyle(
+                              color: profitColor,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13),
+                        ),
+                      ),
+                    ),
+                    _badge(record.exchange, const Color(0xFF6366F1)),
+                    _badge(_tradeTypeShort(record.tradeType), Colors.white24,
+                        textColor: Colors.white54),
+                  ],
                 ),
               ),
-              const SizedBox(width: 8),
-              _badge(record.exchange, const Color(0xFF6366F1)),
-              const SizedBox(width: 6),
-              _badge(_tradeTypeShort(record.tradeType), Colors.white24,
-                  textColor: Colors.white54),
-              const Spacer(),
-              Text(
-                _dateFormat.format(record.date),
-                style: const TextStyle(color: Colors.white38, fontSize: 11),
+              // Right side: date + menu — stays intact on all screen sizes
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _dateFormat.format(record.date),
+                    style:
+                        const TextStyle(color: Colors.white38, fontSize: 11),
+                  ),
+                  _buildPopupMenuButton(record),
+                ],
               ),
-              const SizedBox(width: 4),
-              _buildPopupMenuButton(record),
             ],
           ),
           const SizedBox(height: 12),
-          Row(
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
             children: [
               _recordDetail('Buy', _currencyFormat.format(record.buyPrice)),
-              const SizedBox(width: 16),
               _recordDetail(
                   'Sell', _currencyFormat.format(record.sellPrice ?? 0)),
-              const SizedBox(width: 16),
               _recordDetail('Qty', record.quantity.toString()),
-              if (record.sellDate != null) ...[
-                const SizedBox(width: 16),
+              if (record.sellDate != null)
                 _recordDetail('Sold', _dateFormat.format(record.sellDate!)),
-              ],
             ],
           ),
           const Divider(color: Color(0xFF334155), height: 18),
