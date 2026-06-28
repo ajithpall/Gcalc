@@ -222,8 +222,9 @@ class _ReportScreenState extends State<ReportScreen> {
             }
           }
 
-          // Generate unique ID
+          // Generate unique ID and row key
           final id = '${DateTime.now().microsecondsSinceEpoch}_$r';
+          final rowKey = row.map((cell) => _getCellValueAsString(cell).trim()).join('_');
 
           if (sellPrice > 0) {
             // CLOSED trade — calculate charges
@@ -242,6 +243,7 @@ class _ReportScreenState extends State<ReportScreen> {
               stockName: stockName.toUpperCase(),
               calc: calc,
               sellDate: sellDate,
+              rowKey: rowKey,
             ));
           } else {
             // OPEN position (no sell price)
@@ -252,6 +254,7 @@ class _ReportScreenState extends State<ReportScreen> {
               stockName: stockName.toUpperCase(),
               quantity: qty,
               buyPrice: buyPrice,
+              rowKey: rowKey,
             ));
           }
         } catch (e) {
@@ -264,12 +267,55 @@ class _ReportScreenState extends State<ReportScreen> {
         return;
       }
 
-      // 6. Bulk insert into database
-      final inserted = await _journalService.addPnlRecordsBulk(parsedRecords);
-      await _loadRecords(silent: true);
+      // ── Phase A: Map existing database occurrences ──
+      final existingRecords = await _journalService.loadPnlRecords();
+      final Map<String, int> dbCounts = {};
+      for (final trade in existingRecords) {
+        final key = trade.uniqueTradeKey;
+        dbCounts[key] = (dbCounts[key] ?? 0) + 1;
+      }
+
+      // ── Phase B: Parse incoming rows with a Local File Counter ──
+      final List<PnlRecord> uniqueNewRecords = [];
+      int duplicateCount = 0;
+      final Map<String, int> fileCounts = {};
+
+      for (final record in parsedRecords) {
+        final key = record.uniqueTradeKey;
+        fileCounts[key] = (fileCounts[key] ?? 0) + 1;
+
+        final existingCountInDB = dbCounts[key] ?? 0;
+        final currentSeenInFile = fileCounts[key] ?? 0;
+
+        if (currentSeenInFile <= existingCountInDB) {
+          // This instance of the row is already in the database from a previous upload. Skip it!
+          duplicateCount++;
+        } else {
+          uniqueNewRecords.add(record);
+        }
+      }
 
       final label = isFnO ? 'F&O' : 'Stocks';
-      String msg = '$inserted $label trade(s) imported successfully.';
+
+      // ── Condition 1: Full sheet duplicate — skip entirely ──
+      if (uniqueNewRecords.isEmpty) {
+        _showSnack(
+          'This data already exists! File skipped to prevent duplication.',
+          isError: true,
+        );
+        return;
+      }
+
+      // ── Condition 2: Partial overlap — insert only new rows ──
+      final inserted = await _journalService.addPnlRecordsBulk(uniqueNewRecords);
+      await _loadRecords(silent: true);
+
+      String msg;
+      if (duplicateCount > 0) {
+        msg = 'Import complete! $inserted new $label trades added, $duplicateCount duplicate trades skipped.';
+      } else {
+        msg = '$inserted $label trade(s) imported successfully.';
+      }
       if (skippedRows > 0) {
         msg += ' ($skippedRows rows skipped due to missing data.)';
       }

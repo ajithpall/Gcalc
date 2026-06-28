@@ -340,18 +340,35 @@ class JournalService {
 
   /// Bulk-add multiple P&L records at once (used by import pipeline).
   /// Avoids N separate SharedPreferences read/write cycles.
-  /// Skips records whose IDs already exist. Syncs to TradeLog store.
+  /// Skips records whose composite trade key already exists. Syncs to TradeLog store.
   Future<int> addPnlRecordsBulk(List<PnlRecord> newRecords) async {
     if (newRecords.isEmpty) return 0;
 
     final List<PnlRecord> current = await loadPnlRecords();
-    final existingIds = current.map((r) => r.id).toSet();
+    
+    // Map existing database occurrences
+    final Map<String, int> dbCounts = {};
+    for (final r in current) {
+      final key = r.uniqueTradeKey;
+      dbCounts[key] = (dbCounts[key] ?? 0) + 1;
+    }
 
     final List<PnlRecord> toAdd = [];
+    final Map<String, int> fileCounts = {};
+
     for (final record in newRecords) {
-      if (!existingIds.contains(record.id)) {
+      final key = record.uniqueTradeKey;
+      fileCounts[key] = (fileCounts[key] ?? 0) + 1;
+
+      final existingCountInDB = dbCounts[key] ?? 0;
+      final currentSeenInFile = fileCounts[key] ?? 0;
+
+      if (currentSeenInFile <= existingCountInDB) {
+        // This instance of the row is already in the database. Skip it!
+      } else {
         toAdd.add(record);
-        existingIds.add(record.id);
+        // Increment count dynamically to handle identical items in the incoming list
+        dbCounts[key] = existingCountInDB + 1;
       }
     }
 

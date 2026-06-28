@@ -328,53 +328,86 @@ class _RecordScreenState extends State<RecordScreen>
     );
   }
 
+  void _showDeleteAllConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Text("Delete All Records?"),
+        content: Text(
+          "This will permanently erase all ${_records.length} records from your local storage. This action cannot be undone.",
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel", style: TextStyle(color: Colors.white38)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _journalService.clearAll();
+              await _loadRecords();
+            },
+            child: const Text("Delete All", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
       child: Row(
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Record Book',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  letterSpacing: -0.8,
-                ),
-              ),
-              Row(
-                children: [
-                  Text(
-                    '${_closedRecords.length} closed',
-                    style: TextStyle(
-                        color: Colors.white.withOpacity(0.5), fontSize: 13),
+          Expanded(
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                const Text(
+                  'Record Book',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: -0.8,
                   ),
-                  if (_openCount > 0) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF59E0B).withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '$_openCount holding${_openCount > 1 ? 's' : ''}',
-                        style: const TextStyle(
-                            color: Color(0xFFF59E0B),
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold),
-                      ),
+                ),
+                Text(
+                  '${_closedRecords.length} closed',
+                  style: TextStyle(
+                      color: Colors.white.withOpacity(0.5), fontSize: 13),
+                ),
+                if (_openCount > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  ],
-                ],
-              ),
-            ],
+                    child: Text(
+                      '$_openCount holding${_openCount > 1 ? 's' : ''}',
+                      style: const TextStyle(
+                          color: Color(0xFFF59E0B),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 22),
+                  tooltip: "Delete All Records",
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: _showDeleteAllConfirmationDialog,
+                ),
+              ],
+            ),
           ),
-          const Spacer(),
+          const SizedBox(width: 12),
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
@@ -1637,29 +1670,6 @@ class _RecordScreenState extends State<RecordScreen>
     );
   }
 
-  Widget _buildPopupMenuButton(PnlRecord record) {
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert, color: Colors.white70),
-      color: const Color(0xFF1E293B),
-      onSelected: (value) {
-        if (value == 'edit') {
-          _openEditTradeDialog(record);
-        } else if (value == 'delete') {
-          _confirmDeleteRecord(record);
-        }
-      },
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        const PopupMenuItem<String>(
-          value: 'edit',
-          child: Text('Edit'),
-        ),
-        const PopupMenuItem<String>(
-          value: 'delete',
-          child: Text('Delete', style: TextStyle(color: Colors.red)),
-        ),
-      ],
-    );
-  }
 
   Widget _buildRecordCard(PnlRecord record) {
     final isOpen = record.status == PositionStatus.open;
@@ -1706,63 +1716,76 @@ class _RecordScreenState extends State<RecordScreen>
   }
 
   Widget _buildOpenPositionCardContent(PnlRecord record) {
+    final currentRecord = record;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top row — responsive layout
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Left side: stock details with text safety
-              Expanded(
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 6,
-                  runSpacing: 4,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF59E0B).withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text('HOLDING',
-                          style: TextStyle(
-                              color: Color(0xFFF59E0B),
-                              fontWeight: FontWeight.w800,
-                              fontSize: 11,
-                              letterSpacing: 0.5)),
-                    ),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 160),
-                      child: Text(
-                        record.stockName,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                        style: const TextStyle(
-                            color: Colors.white,
+          // --- START RESPONSIVE CARD HEADER REWRITE ---
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Left Bound Block: Constrained allocation for names and badges
+                Expanded(
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6.0,
+                    runSpacing: 4.0,
+                    children: [
+                      // Safe constrained sizing container for the text variable
+                      ConstraintsTransformBox(
+                        constraintsTransform: (constraints) => constraints.copyWith(
+                          maxWidth: constraints.maxWidth > 140 ? 140 : constraints.maxWidth,
+                        ),
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          currentRecord.stockName,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          softWrap: false,
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 15),
+                            fontSize: 14,
+                          ),
+                        ),
                       ),
+                      // Badges wrap cleanly down on micro screens if horizontal width clips
+                      _buildBadge(currentRecord.exchange), 
+                      _buildBadge(currentRecord.segment),
+                    ],
+                  ),
+                ),
+                
+                // Right Bound Block: Fixed metrics locked safely to the right screen border
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      currentRecord.formattedDate,
+                      style: const TextStyle(fontSize: 11, color: Colors.grey),
                     ),
-                    _badge(record.exchange, const Color(0xFF6366F1)),
-                    _badge('Delivery', const Color(0xFF3B82F6)),
+                    const SizedBox(width: 4),
+                    PopupMenuButton<String>(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.more_vert, size: 20, color: Colors.white70),
+                      onSelected: (value) => handleMenuSelection(value, currentRecord),
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(value: "edit", child: Text("Edit")),
+                        const PopupMenuItem(value: "delete", child: Text("Delete", style: TextStyle(color: Colors.red))),
+                      ],
+                    ),
                   ],
                 ),
-              ),
-              // Right side: stays intact on all screen sizes
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildPopupMenuButton(record),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
+          // --- END RESPONSIVE CARD HEADER REWRITE ---
           const SizedBox(height: 12),
 
           // Buy details
@@ -1850,63 +1873,76 @@ class _RecordScreenState extends State<RecordScreen>
 
   Widget _buildClosedPositionCardContent(
       PnlRecord record, bool isProfit, Color profitColor) {
+    final currentRecord = record;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top row — responsive layout
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Left side: stock name + badges with text safety
-              Expanded(
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 6,
-                  runSpacing: 4,
-                  children: [
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 160),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: profitColor.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(8),
+          // --- START RESPONSIVE CARD HEADER REWRITE ---
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Left Bound Block: Constrained allocation for names and badges
+                Expanded(
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6.0,
+                    runSpacing: 4.0,
+                    children: [
+                      // Safe constrained sizing container for the text variable
+                      ConstraintsTransformBox(
+                        constraintsTransform: (constraints) => constraints.copyWith(
+                          maxWidth: constraints.maxWidth > 140 ? 140 : constraints.maxWidth,
                         ),
+                        alignment: Alignment.centerLeft,
                         child: Text(
-                          record.stockName,
+                          currentRecord.stockName,
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
-                          style: TextStyle(
-                              color: profitColor,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 13),
+                          softWrap: false,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
+                      // Badges wrap cleanly down on micro screens if horizontal width clips
+                      _buildBadge(currentRecord.exchange), 
+                      _buildBadge(currentRecord.segment),
+                    ],
+                  ),
+                ),
+                
+                // Right Bound Block: Fixed metrics locked safely to the right screen border
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      currentRecord.formattedDate,
+                      style: const TextStyle(fontSize: 11, color: Colors.grey),
                     ),
-                    _badge(record.exchange, const Color(0xFF6366F1)),
-                    _badge(_tradeTypeShort(record.tradeType), Colors.white24,
-                        textColor: Colors.white54),
+                    const SizedBox(width: 4),
+                    PopupMenuButton<String>(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.more_vert, size: 20, color: Colors.white70),
+                      onSelected: (value) => handleMenuSelection(value, currentRecord),
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(value: "edit", child: Text("Edit")),
+                        const PopupMenuItem(value: "delete", child: Text("Delete", style: TextStyle(color: Colors.red))),
+                      ],
+                    ),
                   ],
                 ),
-              ),
-              // Right side: date + menu — stays intact on all screen sizes
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _dateFormat.format(record.date),
-                    style:
-                        const TextStyle(color: Colors.white38, fontSize: 11),
-                  ),
-                  _buildPopupMenuButton(record),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
+          // --- END RESPONSIVE CARD HEADER REWRITE ---
           const SizedBox(height: 12),
           Wrap(
             spacing: 16,
@@ -1951,6 +1987,44 @@ class _RecordScreenState extends State<RecordScreen>
               fontSize: 10,
               fontWeight: FontWeight.bold)),
     );
+  }
+
+  Widget _buildBadge(String text) {
+    Color bg;
+    Color? textColor;
+    switch (text.toLowerCase()) {
+      case 'holding':
+        bg = const Color(0xFFF59E0B);
+        break;
+      case 'delivery':
+        bg = const Color(0xFF3B82F6);
+        break;
+      case 'intraday':
+        bg = Colors.white24;
+        textColor = Colors.white54;
+        break;
+      case 'futures':
+        bg = Colors.teal;
+        break;
+      case 'options':
+        bg = Colors.purple;
+        break;
+      case 'nse':
+      case 'bse':
+        bg = const Color(0xFF6366F1);
+        break;
+      default:
+        bg = Colors.grey;
+    }
+    return _badge(text, bg, textColor: textColor);
+  }
+
+  void handleMenuSelection(String value, PnlRecord record) {
+    if (value == 'edit') {
+      _openEditTradeDialog(record);
+    } else if (value == 'delete') {
+      _confirmDeleteRecord(record);
+    }
   }
 
   Widget _recordDetail(String label, String value) {
@@ -2976,5 +3050,27 @@ class DetailedChargesModal extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+extension PnlRecordExtension on PnlRecord {
+  String get segment {
+    if (status == PositionStatus.open) {
+      return 'Holding';
+    }
+    switch (tradeType) {
+      case TradeType.delivery:
+        return 'Delivery';
+      case TradeType.intraday:
+        return 'Intraday';
+      case TradeType.futures:
+        return 'Futures';
+      case TradeType.options:
+        return 'Options';
+    }
+  }
+
+  String get formattedDate {
+    return DateFormat('dd MMM yyyy').format(date);
   }
 }

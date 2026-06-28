@@ -34,6 +34,9 @@ class PnlRecord {
   final double totalCharges;
   final double netPL;
   final PositionStatus status; // OPEN = holding; CLOSED = realized
+  final String? rowKey;
+
+  String get uniqueTradeKey => rowKey ?? "${stockName}_${date}_${sellDate}_${quantity}_${buyPrice}_${sellPrice}_${exchange}";
 
   const PnlRecord({
     required this.id,
@@ -49,6 +52,7 @@ class PnlRecord {
     required this.totalCharges,
     required this.netPL,
     PositionStatus? status,
+    this.rowKey,
   }) : status = status ??
             ((tradeType == TradeType.delivery && sellPrice == null)
                 ? PositionStatus.open
@@ -62,6 +66,7 @@ class PnlRecord {
     required String stockName,
     required CalculationResult calc,
     DateTime? sellDate,
+    String? rowKey,
   }) {
     return PnlRecord(
       id: id,
@@ -79,6 +84,7 @@ class PnlRecord {
       totalCharges: calc.totalCharges,
       netPL: calc.netPL,
       status: PositionStatus.closed,
+      rowKey: rowKey,
     );
   }
 
@@ -90,6 +96,7 @@ class PnlRecord {
     required String stockName,
     required int quantity,
     required double buyPrice,
+    String? rowKey,
   }) {
     return PnlRecord(
       id: id,
@@ -107,6 +114,7 @@ class PnlRecord {
       totalCharges: 0.0,
       netPL: 0.0,
       status: PositionStatus.open,
+      rowKey: rowKey,
     );
   }
 
@@ -125,6 +133,7 @@ class PnlRecord {
     double? totalCharges,
     double? netPL,
     PositionStatus? status,
+    String? rowKey,
   }) {
     return PnlRecord(
       id: id ?? this.id,
@@ -140,6 +149,7 @@ class PnlRecord {
       totalCharges: totalCharges ?? this.totalCharges,
       netPL: netPL ?? this.netPL,
       status: status ?? this.status,
+      rowKey: rowKey ?? this.rowKey,
     );
   }
 
@@ -157,6 +167,7 @@ class PnlRecord {
         'totalCharges': totalCharges,
         'netPL': netPL,
         'status': status.toJson(),
+        'rowKey': rowKey,
       };
 
   factory PnlRecord.fromJson(Map<String, dynamic> json) {
@@ -186,6 +197,7 @@ class PnlRecord {
       totalCharges: (json['totalCharges'] as num).toDouble(),
       netPL: (json['netPL'] as num).toDouble(),
       status: status,
+      rowKey: json['rowKey'] as String?,
     );
   }
 
